@@ -292,7 +292,7 @@ def BigClock():
     try:
       result = user.get_now_playing()
       if result:
-        NowPlaying(result)
+        NowScrobbling(result)
         time.sleep(1)
         LoadSymbolBlock(digits)
     except:
@@ -332,28 +332,28 @@ def InitLast():
   network     = pylast.LastFMNetwork(api_key = API_KEY, api_secret = API_SECRET, username = username, password_hash = password)
   user        = network.get_user("dudeman1996")
 
-def NowPlaying(result):
+def NowScrobbling(result):
   artist = str(result.artist.get_name())
   title  = str(result.get_title())
-  DisplayNowPlaying(artist, title)
+  DisplayNowScrobbling(artist, title)
   while (True):
     try:
-      result = user.get_now_playing()
+      result    = user.get_now_playing()
       newartist = str(result.artist.get_name())
       newtitle  = str(result.get_title())
       if newtitle != title:
-        artist = newartist
-        title = newtitle
-        DisplayNowPlaying(artist, title)
+        artist  = newartist
+        title   = newtitle
+        DisplayNowScrobbling(artist, title)
       time.sleep(2)
     except:
       ClearDisplay()
       return
 
-def DisplayNowPlaying(artist, title):
+def DisplayNowScrobbling(artist, title):
   ClearDisplay()
   GotoLine(0)
-  ShowMessage("Now Playing:")
+  ShowMessage("Now Scrobbling:")
   LoadSymbolBlock(musicNote)
   GotoXY(0,16)
   for count in range(len(musicNote)):
