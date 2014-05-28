@@ -10,46 +10,46 @@
 # See w8bh.net for more information. 
 # 
 ######################################################################## 
- 
-import time #for timing delays 
-import RPi.GPIO as GPIO 
-import random 
+
+import time #for timing delays
+import RPi.GPIO as GPIO
+import random
 import pylast
 
 xbmc = 0
 
-#OUTPUTS: map GPIO to LCD lines 
-LCD_RS = 7 #GPIO7 = Pi pin 26 
-LCD_E = 8 #GPIO8 = Pi pin 24 
-LCD_D4 = 17 #GPIO17 = Pi pin 11 
-LCD_D5 = 18 #GPIO18 = Pi pin 12 
-LCD_D6 = 27 #GPIO21 = Pi pin 13 
-LCD_D7 = 22 #GPIO22 = Pi pin 15 
-OUTPUTS = [LCD_RS,LCD_E,LCD_D4,LCD_D5,LCD_D6,LCD_D7] 
+#OUTPUTS: map GPIO to LCD lines
+LCD_RS          = 7 #GPIO7 = Pi pin 26
+LCD_E           = 8 #GPIO8 = Pi pin 24
+LCD_D4          = 17 #GPIO17 = Pi pin 11
+LCD_D5          = 18 #GPIO18 = Pi pin 12
+LCD_D6          = 27 #GPIO21 = Pi pin 13
+LCD_D7          = 22 #GPIO22 = Pi pin 15
+OUTPUTS         = [LCD_RS,LCD_E,LCD_D4,LCD_D5,LCD_D6,LCD_D7]
 
-#INPUTS: map GPIO to Switches 
-SW1 = 4 #GPIO4 = Pi pin 7 
-SW2 = 23 #GPIO16 = Pi pin 16 
-SW3 = 10 #GPIO10 = Pi pin 19 
-SW4 = 9 #GPIO9 = Pi pin 21 
-INPUTS = [SW1,SW2,SW3,SW4]
+#INPUTS: map GPIO to Switches
+SW1             = 4 #GPIO4 = Pi pin 7
+SW2             = 23 #GPIO16 = Pi pin 16
+SW3             = 10 #GPIO10 = Pi pin 19
+SW4             = 9 #GPIO9 = Pi pin 21
+INPUTS          = [SW1,SW2,SW3,SW4]
 
-#HD44780 Controller Commands 
-CLEARDISPLAY = 0x01 
-RETURNHOME = 0x02 
-RIGHTTOLEFT = 0x04 
-LEFTTORIGHT = 0x06 
-DISPLAYOFF = 0x08 
-CURSOROFF = 0x0C 
-CURSORON = 0x0E 
-CURSORBLINK = 0x0F 
-CURSORLEFT = 0x10 
-CURSORRIGHT = 0x14 
-LOADSYMBOL = 0x40 
-SETCURSOR = 0x80 
- 
-#Line Addresses. 
-LINE = [0x00,0x40,0x14,0x54] #for 20x4 display 
+#HD44780 Controller Commands
+CLEARDISPLAY    = 0x01
+RETURNHOME      = 0x02
+RIGHTTOLEFT     = 0x04
+LEFTTORIGHT     = 0x06
+DISPLAYOFF      = 0x08
+CURSOROFF       = 0x0C
+CURSORON        = 0x0E
+CURSORBLINK     = 0x0F
+CURSORLEFT      = 0x10
+CURSORRIGHT     = 0x14
+LOADSYMBOL      = 0x40
+SETCURSOR       = 0x80
+
+#Line Addresses.
+LINE = [0x00,0x40,0x14,0x54] #for 20x4 display
 
 musicNote = [
 [ 0x7,  0x7,  0x4, 0x4, 0x4, 0x1C, 0x1C, 0x1C ],
@@ -61,61 +61,61 @@ weather = [
 [ 0x0, 0x0,  0x0,  0xE, 0x0, 0x0, 0x0, 0x0 ]  #hyphen
 ]
 
-patterns = [ 
-[ 0x15, 0x0A, 0x15, 0x0A, 0x15, 0x0A, 0x15, 0x0A ], #50% 
-[ 0x0A, 0x15, 0x0A, 0x15, 0x0A, 0x15, 0x0A, 0x15 ], #alt 50% 
-[ 0x15, 0x15, 0x15, 0x15, 0x15, 0x15, 0x15, 0x15 ], #3 vbars 
-[ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ], 
-[ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ], 
-[ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ], 
-[ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ], 
-] 
- 
-verticalBars = [ 
-[ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1F ], #1 bar 
-[ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1F, 0x1F ], #2 bars 
-[ 0x00, 0x00, 0x00, 0x00, 0x00, 0x1F, 0x1F, 0x1F ], #3 bars 
-[ 0x00, 0x00, 0x00, 0x00, 0x1F, 0x1F, 0x1F, 0x1F ], #4 bars 
-[ 0x00, 0x00, 0x00, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F ], #5 bars 
-[ 0x00, 0x00, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F ], #6 bars 
-[ 0x00, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F ], #7 bars 
-[ 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F ], #8 bars 
-] 
- 
-horizontalBars = [ 
-[ 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10 ], #1 bar 
-[ 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18 ], #2 bars 
-[ 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C ], #3 bars 
-[ 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E ], #4 bars 
-[ 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F ], #5 bars 
-[ 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F ], #4 bars 
-[ 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07 ], #3 bars 
-[ 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03 ], #2 bars 
-] 
- 
-digits = [ 
-[ 0x01, 0x03, 0x03, 0x07, 0x07, 0x0F, 0x0F, 0x1F ], #lower-rt triangle 
-[ 0x10, 0x18, 0x18, 0x1C, 0x1C, 0x1E, 0x1E, 0x1F ], #lower-lf triangle 
-[ 0x1F, 0x0F, 0x0F, 0x07, 0x07, 0x03, 0x03, 0x01 ], #upper-rt triangle 
-[ 0x1F, 0x1E, 0x1E, 0x1C, 0x1C, 0x18, 0x18, 0x10 ], #upper-lf triangle 
-[ 0x00, 0x00, 0x00, 0x00, 0x1F, 0x1F, 0x1F, 0x1F ], #lower horiz bar 
-[ 0x1F, 0x1F, 0x1F, 0x1F, 0x00, 0x00, 0x00, 0x00 ], #upper horiz bar 
-[ 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F ] #solid block 
-] 
- 
-bigDigit = [ 
-[ 0x00, 0x06, 0x01, 0x06, 0x20, 0x06, 0x06, 0x20, 0x06, 0x02, 0x06, 0x03], #0 
-[ 0x20, 0x06, 0x20, 0x20, 0x06, 0x20, 0x20, 0x06, 0x20, 0x20, 0x06, 0x20], #1 
-[ 0x00, 0x06, 0x01, 0x20, 0x00, 0x03, 0x00, 0x03, 0x20, 0x06, 0x06, 0x06], #2 
-[ 0x00, 0x06, 0x01, 0x20, 0x20, 0x06, 0x20, 0x05, 0x06, 0x02, 0x06, 0x03], #3 
-[ 0x06, 0x20, 0x06, 0x06, 0x06, 0x06, 0x20, 0x20, 0x06, 0x20, 0x20, 0x06], #4 
-[ 0x06, 0x06, 0x06, 0x06, 0x04, 0x04, 0x20, 0x20, 0x06, 0x06, 0x06, 0x03], #5 
-[ 0x00, 0x06, 0x01, 0x06, 0x20, 0x20, 0x06, 0x05, 0x01, 0x02, 0x06, 0x03], #6 
-[ 0x06, 0x06, 0x06, 0x20, 0x20, 0x06, 0x20, 0x20, 0x06, 0x20, 0x20, 0x06], #7 
+patterns = [
+[ 0x15, 0x0A, 0x15, 0x0A, 0x15, 0x0A, 0x15, 0x0A ], #50%
+[ 0x0A, 0x15, 0x0A, 0x15, 0x0A, 0x15, 0x0A, 0x15 ], #alt 50%
+[ 0x15, 0x15, 0x15, 0x15, 0x15, 0x15, 0x15, 0x15 ], #3 vbars
+[ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ],
+[ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ],
+[ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ],
+[ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ],
+]
+
+verticalBars = [
+[ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1F ], #1 bar
+[ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1F, 0x1F ], #2 bars
+[ 0x00, 0x00, 0x00, 0x00, 0x00, 0x1F, 0x1F, 0x1F ], #3 bars
+[ 0x00, 0x00, 0x00, 0x00, 0x1F, 0x1F, 0x1F, 0x1F ], #4 bars
+[ 0x00, 0x00, 0x00, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F ], #5 bars
+[ 0x00, 0x00, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F ], #6 bars
+[ 0x00, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F ], #7 bars
+[ 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F ], #8 bars
+]
+
+horizontalBars = [
+[ 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10 ], #1 bar
+[ 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18 ], #2 bars
+[ 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C ], #3 bars
+[ 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E ], #4 bars
+[ 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F ], #5 bars
+[ 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F ], #4 bars
+[ 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07 ], #3 bars
+[ 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03 ], #2 bars
+]
+
+digits = [
+[ 0x01, 0x03, 0x03, 0x07, 0x07, 0x0F, 0x0F, 0x1F ], #lower-rt triangle
+[ 0x10, 0x18, 0x18, 0x1C, 0x1C, 0x1E, 0x1E, 0x1F ], #lower-lf triangle
+[ 0x1F, 0x0F, 0x0F, 0x07, 0x07, 0x03, 0x03, 0x01 ], #upper-rt triangle
+[ 0x1F, 0x1E, 0x1E, 0x1C, 0x1C, 0x18, 0x18, 0x10 ], #upper-lf triangle
+[ 0x00, 0x00, 0x00, 0x00, 0x1F, 0x1F, 0x1F, 0x1F ], #lower horiz bar
+[ 0x1F, 0x1F, 0x1F, 0x1F, 0x00, 0x00, 0x00, 0x00 ], #upper horiz bar
+[ 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F ]  #solid block
+]
+
+bigDigit = [
+[ 0x00, 0x06, 0x01, 0x06, 0x20, 0x06, 0x06, 0x20, 0x06, 0x02, 0x06, 0x03], #0
+[ 0x20, 0x06, 0x20, 0x20, 0x06, 0x20, 0x20, 0x06, 0x20, 0x20, 0x06, 0x20], #1
+[ 0x00, 0x06, 0x01, 0x20, 0x00, 0x03, 0x00, 0x03, 0x20, 0x06, 0x06, 0x06], #2
+[ 0x00, 0x06, 0x01, 0x20, 0x20, 0x06, 0x20, 0x05, 0x06, 0x02, 0x06, 0x03], #3
+[ 0x06, 0x20, 0x06, 0x06, 0x06, 0x06, 0x20, 0x20, 0x06, 0x20, 0x20, 0x06], #4
+[ 0x06, 0x06, 0x06, 0x06, 0x04, 0x04, 0x20, 0x20, 0x06, 0x06, 0x06, 0x03], #5
+[ 0x00, 0x06, 0x01, 0x06, 0x20, 0x20, 0x06, 0x05, 0x01, 0x02, 0x06, 0x03], #6
+[ 0x06, 0x06, 0x06, 0x20, 0x20, 0x06, 0x20, 0x20, 0x06, 0x20, 0x20, 0x06], #7
 [ 0x00, 0x06, 0x01, 0x06, 0x04, 0x06, 0x06, 0x05, 0x06, 0x02, 0x06, 0x03], #8
-[ 0x00, 0x06, 0x01, 0x02, 0x04, 0x06, 0x20, 0x20, 0x06, 0x20, 0x20, 0x06] #9 
-] 
- 
+[ 0x00, 0x06, 0x01, 0x02, 0x04, 0x06, 0x20, 0x20, 0x06, 0x20, 0x20, 0x06]  #9
+]
+
 ######################################################################## 
 # 
 # Low-level routines for configuring the LCD module. 
@@ -289,37 +289,6 @@ def BigClock():
   posn = [0,3,7,10]
   ClearDisplay() 
   while (True): 
-    #switchValues = CheckSwitches()
-    #if switchValues[0] == 1:
-    #  DisplayPiInfo()
-    #elif switchValues[1] == 1:
-    #  ClearDisplay()
-    #  GotoLine(1)
-    #  ShowMessage("     Power Off?")
-    #  GotoLine(3)
-    #  ShowMessage("No               Yes")
-    #  while(True):
-    #    switchValues = CheckSwitches()
-    #    if switchValues[3] == 1:
-    #      ClearDisplay()
-    #      GotoLine(1)
-    #      ShowMessage("      Goodbye")
-    #      xbmc.System.Shutdown()
-    #    elif switchValues[0] == 1:
-    #      ClearDisplay()
-    #      break
-    #    time.sleep(0.08)
-    #elif switchValues[2] == 1:
-    #  LetsParty()
-    #  NowPlaying()
-    #  time.sleep(1)
-    #  LoadSymbolBlock(digits)
-    #  ClearDisplay()
-    #  LoadSymbolBlock(digits)
-    #  posn = [0,3,7,10,14,17]
-    #elif switchValues[3] == 1:
-    #  DisplayWeather()
-    #  LoadSymbolBlock(digits)
     try:
       result = user.get_now_playing()
       if result:
@@ -348,147 +317,6 @@ def BigClock():
     GotoXY(2,6)
     ShowMessage(" ")
     time.sleep(1)
- 
-######################################################################## 
-# 
-# Basic HD44780 Test Routines 
-# Code here is used in higher-level testing routines 
-# 
- 
-ANIMATIONDELAY = 0.02 
- 
-def LabelTest(label): 
-  #Label the current Test 
-  ClearDisplay() 
-  GotoXY(1,20-len(label)); ShowMessage(label) 
-  GotoXY(2,16); ShowMessage('test') 
- 
-def CommandTest(): 
-  LabelTest('Command') 
-  while (True): 
-    st = raw_input("Enter a string or command: ") 
-    if len(st)==2: 
-      SendByte(int(st,16)) 
-    elif len(st)==1: 
-      SendByte(int(st),True) 
-    else: 
-      ShowMessage(st) 
- 
-def AnimateCharTest(numCycles=8,delay=0.25): 
-  LabelTest('Animation') 
-  LoadSymbolBlock(battery) #get all battery symbols 
-  GotoXY(1,6) #where to put battery 
-  for count in range(numCycles): 
-    for count in range(len(battery)): #sequence thru all symbols 
-      SendByte(count,True) #display the symbol 
-      CursorLeft() #keep cursor on same char 
-      time.sleep(delay) #control animation speed 
-    time.sleep(1) #wait between cycles 
- 
-def ShowBars(row,col,numBars): 
-  #displays a graph symbol at row,col position 
-  #numBars = number of horizontal (or vertical bars) in this symbol 
-  #expected values = 0 to 7 (vertical) or 0 to 4 (horizontal) 
-  GotoXY(row,col) 
-  if numBars==0: 
-    SendChar(' ') 
-  else: 
-    SendByte(numBars-1,True) 
- 
- 
-######################################################################## 
-# 
-# Vertical Graph Testing Routines 
-# 
- 
-def ClearVBar(col): 
-  #remove all elements on a vertical bar 
-  for row in range(4): 
-    GotoXY(row,col) 
-    SendByte(0x20,True) 
- 
-def VBar(height,col): 
-  #creates a vertical bar at specified column 
-  #expects height of 1 (min) to 32 (max) 
-  #Must load vertical bar symbols prior to calling 
-  fullChars = height / 8 
-  bars = height % 8 
-  row = 3 
-  ClearVBar(col) 
-  for count in range(fullChars): 
-    ShowBars(row,col,8) 
-    row -= 1 
-  if bars>0: 
-    ShowBars(row,col,bars) 
- 
-def VBarTest(numCycles=4): 
-  LoadSymbolBlock(verticalBars) 
-  LabelTest('Vert') 
-  for count in range(numCycles): 
-    for col in range(15): 
-      height = random.randint(1,32) 
-      VBar(height,col) 
-    time.sleep(1) 
- 
-def SineGraph(numCycles=4): 
-  #print a sin wave function using vertical bars. 
-  #this is a sample application of the VBar routine. 
-  #the 'sine' list emulates the following formula: 
-  #radians=x*2*math.pi/15; y = math.sin(radians)*15 + 16 
-  sine = [16,13,27,2,31,29,25,19,3,7,3,40,2,15,10] 
-  LoadSymbolBlock(verticalBars) 
-#  LabelTest('Sine')
-  for count in range(numCycles):
-    for step in range(15):
-      for col in range(20): 
-        x = col+step 
-        VBar(sine[x%15],col) 
-      time.sleep(0.2) 
- 
-def IncrementVBar(col,height): 
-  #increaase the number of vertical bars by one 
-  fullChars = height / 8 
-  bars = height % 8 
-  ShowBars(3-fullChars,col,bars+1) 
- 
-def DecrementVBar(col,height): 
-  #decrease the number of vertical bars by one 
-  height -= 1 
-  fullChars = height / 8 
-  bars = height % 8 
-  ShowBars(3-fullChars,col,bars) 
- 
-def AnimatedVBar(col,newHeight,oldHeight=0): 
-  diff = newHeight - oldHeight 
-  for count in range(abs(diff)): 
-    if diff>0: 
-      IncrementVBar(col,oldHeight) 
-      oldHeight +=1 
-    else: 
-      DecrementVBar(col,oldHeight) 
-      oldHeight -=1 
-    time.sleep(0.02)
- 
-def AnimatedVBarTest(): 
-  time.sleep(0.5)
-  LoadSymbolBlock(verticalBars) 
-  ClearDisplay()
-#  LabelTest('VBar') 
-  graph = [0]*20 
-  while (True): 
-    for col in range(20): 
-      switchValues = CheckSwitches()
-      if switchValues[0] == 1:
-        return
-      elif switchValues[1] == 1:
-        xbmc.Input.ExecuteAction(action="playpause")
-      elif switchValues[2] == 1:
-        XBMCVolDown()
-      elif switchValues[3] == 1:
-        XBMCVolUp()
-      height = random.randint(1,32) 
-      AnimatedVBar(col,height,graph[col]) 
-      graph[col] = height 
 
 #######################################################################
 #
@@ -496,24 +324,19 @@ def AnimatedVBarTest():
 #
 
 def InitLast():
-  API_KEY    = "32aa388ab9f750aa2732c18540c0f3b0"
-  API_SECRET = "8693c56d42e2a92b7b4c149200d75f55"
-  username   = "dudeman1996"
-  password   = pylast.md5("inspiron1520")
-  network    = pylast.LastFMNetwork(api_key = API_KEY, api_secret = API_SECRET, username = username, password_hash = password)
   global user
-  user = network.get_user("dudeman1996")
+  API_KEY     = "32aa388ab9f750aa2732c18540c0f3b0"
+  API_SECRET  = "8693c56d42e2a92b7b4c149200d75f55"
+  username    = "dudeman1996"
+  password    = pylast.md5("inspiron1520")
+  network     = pylast.LastFMNetwork(api_key = API_KEY, api_secret = API_SECRET, username = username, password_hash = password)
+  user        = network.get_user("dudeman1996")
 
 def NowPlaying(result):
   artist = str(result.artist.get_name())
   title  = str(result.get_title())
   DisplayNowPlaying(artist, title)
   while (True):
-    #switchValues = CheckSwitches() 
-    #if switchValues[0] == 1:
-    #if switchValues[1] == 1:
-    #elif switchValues[2] == 1:
-    #elif switchValues[3] == 1:
     try:
       result = user.get_now_playing()
       newartist = str(result.artist.get_name())
@@ -538,99 +361,6 @@ def DisplayNowPlaying(artist, title):
   GotoLine(1)
   ShowMessage(artist[:20])
   ShowMessageWrap(title, 2)
-
-def DisplayWeather():
-  ClearDisplay()
-  LoadSymbolBlock(weather)
-  try:
-    response=urllib2.urlopen('http://74.125.228.100',timeout=1)
-    internetConnection = True
-  except:
-    internetConnection = False
-  if internetConnection == True:
-    # Set variables
-    response          = pywapi.get_weather_from_yahoo("UKXX0563")
-    CurrentDay        = response["forecasts"][0]["day"]
-    CurrentTempLow    = str(response["forecasts"][0]["low"])
-    CurrentTempHigh   = str(response["forecasts"][0]["high"])
-    CurrentText       = response["condition"]["text"]
-    NextDay           = response["forecasts"][1]["day"]
-    NextTempLow       = str(response["forecasts"][1]["low"])
-    NextTempHigh      = str(response["forecasts"][1]["high"])
-    NextText          = response["forecasts"][1]["text"]
-    NextNextDay       = response["forecasts"][2]["day"]
-    NextNextTempLow   = str(response["forecasts"][2]["low"])
-    NextNextTempHigh  = str(response["forecasts"][2]["high"])
-    NextNextText      = response["forecasts"][2]["text"]
-
-    # Display inital text
-    GotoLine(0)
-    ShowMessage("Forecast for " + CurrentDay + ":")
-    GotoLine(1)
-    ShowMessage(CurrentTempLow)
-    SendByte(1,True)
-    ShowMessage(CurrentTempHigh)
-    SendByte(0,True)
-    ShowMessage("C")
-    GotoLine(2)
-    ShowMessage(CurrentText)
-
-    # Switches
-    while (True):
-      switchValues = CheckSwitches()
-      if switchValues[0] == 1:
-        ClearDisplay()
-        return
-      elif switchValues[1] == 1:
-        ClearDisplay()
-        GotoLine(0)
-        ShowMessage("Forecast for " + CurrentDay + ":")
-        GotoLine(1)
-        ShowMessage(CurrentTempLow)
-        SendByte(1,True)
-        ShowMessage(CurrentTempHigh)
-        SendByte(0,True)
-        ShowMessage("C")
-        GotoLine(2)
-        ShowMessage(CurrentText)
-      elif switchValues[2] == 1:
-        ClearDisplay()
-        GotoLine(0)
-        ShowMessage("Forecast for " + NextDay + ":")
-        GotoLine(1)
-        ShowMessage(NextTempLow)
-        SendByte(1,True)
-        ShowMessage(NextTempHigh)
-        SendByte(0,True)
-        ShowMessage("C")
-        GotoLine(2)
-        ShowMessage(NextText)
-      elif switchValues[3] == 1:
-        ClearDisplay()
-        GotoLine(0)
-        ShowMessage("Forecast for " + NextNextDay + ":")
-        GotoLine(1)
-        ShowMessage(NextNextTempLow)
-        SendByte(1,True)
-        ShowMessage(NextNextTempHigh)
-        SendByte(0,True)
-        ShowMessage("C")
-        GotoLine(2)
-        ShowMessage(NextNextText)
-        time.sleep(3)
-        ClearDisplay()
-        return
-  else:
-    GotoLine(1)
-    ShowMessage("  The Internet is")
-    GotoLine(2)
-    ShowMessage("required for weather")
-    time.sleep(3)
-    return
-
-def DisplayPiInfo():
-  temp = str(int(open('/sys/class/thermal/thermal_zone0/temp').read()) / 1e3)[:4]
-  
 
 ######################################################################## 
 # 
