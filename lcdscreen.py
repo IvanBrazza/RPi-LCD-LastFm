@@ -323,7 +323,7 @@ def BigClock():
     try:
       result = user.get_now_playing()
       if result:
-        NowPlaying()
+        NowPlaying(result)
         time.sleep(1)
         LoadSymbolBlock(digits)
     except:
@@ -504,9 +504,7 @@ def InitLast():
   global user
   user = network.get_user("dudeman1996")
 
-def NowPlaying():
-  time.sleep(0.5)
-  result = user.get_now_playing()
+def NowPlaying(result):
   artist = str(result.artist.get_name())
   title  = str(result.get_title())
   DisplayNowPlaying(artist, title)
@@ -524,7 +522,7 @@ def NowPlaying():
         artist = newartist
         title = newtitle
         DisplayNowPlaying(artist, title)
-      time.sleep(0.03)
+      time.sleep(2)
     except:
       ClearDisplay()
       return
