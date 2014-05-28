@@ -15,6 +15,8 @@ import time #for timing delays
 import RPi.GPIO as GPIO
 import random
 import pylast
+import os.path
+import json
 
 xbmc = 0
 
@@ -323,12 +325,36 @@ def BigClock():
 # Custom Functions
 #
 
+def CheckConfig():
+  if os.path.isfile("lastconfig.json"):
+    return
+  else:
+    CreateConfig()
+
+def CreateConfig():
+  GotoXY(0,0)
+  ShowMessage("Creating config...")
+  print "A configuration was not found. Let's create one."
+
+  KEY       = raw_input("Enter your Last.fm API key: ")
+  SECRET    = raw_input("Enter your Last.fm API secret: ")
+  username  = raw_input("Enter your Last.fm username: ")
+  password  = pylast.md5(raw_input("Enter your Last.fm password: "))
+  towrite   = {'API_KEY': KEY, 'API_SECRET': SECRET, 'username': username, 'password': password}
+
+  with open('lastconfig.json', 'w') as outfile:
+    json.dump(towrite, outfile, indent=4)
+
 def InitLast():
   global user
-  API_KEY     = "32aa388ab9f750aa2732c18540c0f3b0"
-  API_SECRET  = "8693c56d42e2a92b7b4c149200d75f55"
-  username    = "dudeman1996"
-  password    = pylast.md5("inspiron1520")
+
+  with open('lastconfig.json') as infile:
+    config    = json.load(infile)
+
+  API_KEY     = config['API_KEY']
+  API_SECRET  = config['API_SECRET']
+  username    = config['username']
+  password    = config['password']
   network     = pylast.LastFMNetwork(api_key = API_KEY, api_secret = API_SECRET, username = username, password_hash = password)
   user        = network.get_user("dudeman1996")
 
@@ -370,6 +396,7 @@ def DisplayNowScrobbling(artist, title):
 print "Pi LCD4 program starting."
 InitIO() #Initialization 
 InitLCD() 
+CheckConfig()
 InitLast()
 BigClock() #Something actually useful 
  
