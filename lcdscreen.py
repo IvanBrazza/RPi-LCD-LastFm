@@ -446,19 +446,20 @@ def NowScrobbling(result):
         title   = newtitle
         artist  = newartist
         album   = newalbum
-        ArtistThread.join()
-        AlbumThread.join()
-        TitleThread.join()
+        for Thread in Threads:
+          Thread.join()
         DisplayNowScrobbling(artist, album, title)
       time.sleep(2)
     except:
-      ArtistThread.join()
-      AlbumThread.join()
-      TitleThread.join()
+      for Thread in Threads:
+        Thread.join()
       ClearDisplay()
       return
 
 def DisplayNowScrobbling(artist, album, title):
+  global Threads
+  Threads = []
+
   ClearDisplay()
 
   GotoLine(0)
@@ -473,6 +474,7 @@ def DisplayNowScrobbling(artist, album, title):
     ArtistThread = threading.Thread(target=ScrollArtist, args=[artist])
     if ArtistThread.isAlive() == False:
       ArtistThread.start()
+      Threads.append(ArtistThread)
   else:
     GotoLine(1)
     ShowMessage(artist)
@@ -482,6 +484,7 @@ def DisplayNowScrobbling(artist, album, title):
     AlbumThread = threading.Thread(target=ScrollAlbum, args=[album])
     if AlbumThread.isAlive() == False:
       AlbumThread.start()
+      Threads.append(AlbumThread)
   else:
     GotoLine(2)
     ShowMessage(album)
@@ -491,6 +494,7 @@ def DisplayNowScrobbling(artist, album, title):
     TitleThread = threading.Thread(target=ScrollTitle, args=[title])
     if TitleThread.isAlive() == False:
       TitleThread.start()
+      Threads.append(TitleThread)
   else:
     GotoLine(3)
     ShowMessage(title)
