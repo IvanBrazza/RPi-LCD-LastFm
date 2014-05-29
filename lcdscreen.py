@@ -233,7 +233,17 @@ def ShowMessageWrap(string, LineNumber):
       for character in message:
         SendChar(character)
       WordWrap = True
- 
+
+def ScrollMessage(string, LineNumber):
+  end   = 20
+  for start in range(0, len(string)):
+    GotoLine(LineNumber)
+    message = string[start:end].ljust(20)
+    for character in message:
+      SendChar(character)
+    time.sleep(0.5)
+    end += 1
+
 def GotoLine(row): 
   #Moves cursor to the given row 
   #Expects row values 0-1 for 16x2 display; 0-3 for 20x4 display 
@@ -291,11 +301,15 @@ def BigClock():
   posn = [0,3,7,10]
   ClearDisplay() 
   while (True): 
+    switchValues = CheckSwitches()
+    if switchValues[0] == 1:
+      InitIO()
+      InitLCD()
+      LoadSymbolBlock(digits)
     try:
       result = user.get_now_playing()
       if result:
         NowScrobbling(result)
-        time.sleep(1)
         LoadSymbolBlock(digits)
     except:
       time.sleep(0)
@@ -363,14 +377,16 @@ def NowScrobbling(result):
   title  = str(result.get_title())
   DisplayNowScrobbling(artist, title)
   while (True):
+    switchValues = CheckSwitches()
+    if switchValues[0] == 1:
+      InitIO()
+      InitLCD()
+      DisplayNowScrobbling(artist, title)
     try:
       result    = user.get_now_playing()
-      newartist = str(result.artist.get_name())
-      newtitle  = str(result.get_title())
-      if newtitle != title:
-        artist  = newartist
-        title   = newtitle
-        DisplayNowScrobbling(artist, title)
+      artist = str(result.artist.get_name())
+      title  = str(result.get_title())
+      DisplayNowScrobbling(artist, title)
       time.sleep(2)
     except:
       ClearDisplay()
@@ -386,7 +402,11 @@ def DisplayNowScrobbling(artist, title):
     SendByte(count,True)
   GotoLine(1)
   ShowMessage(artist[:20])
-  ShowMessageWrap(title, 2)
+  if len(title) > 20:
+    ScrollMessage(title, 3)
+  else:
+    GotoLine(3)
+    ShowMessage(title)
 
 ######################################################################## 
 # 
