@@ -207,34 +207,6 @@ def ShowMessage(string):
   for character in string: 
     SendChar(character)
 
-def ShowMessageWrap(string, LineNumber): 
-  #Send string of characters to display at current cursor position 
-  WordWrap = False
-  while WordWrap == False:
-    if LineNumber == 4:
-      return
-    if len(string) > 20:
-      if string[0:1] == " ":
-        message = string[1:21]
-        string  = string[21:]
-      else:
-        message = string[:20]
-        string  = string[20:]
-      GotoLine(LineNumber)
-      LineNumber += 1
-      for character in message: 
-        SendChar(character) 
-    else:
-      if string[0:1] == " ":
-        message = string[1:]
-      else:
-        message = string
-      GotoLine(LineNumber)
-      LineNumber += 1
-      for character in message:
-        SendChar(character)
-      WordWrap = True
-
 def ScrollTitle(string):
   pad     = " " * 20
   newstr  = pad + string
