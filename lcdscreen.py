@@ -236,6 +236,8 @@ def ShowMessageWrap(string, LineNumber):
       WordWrap = True
 
 def ScrollTitle(string):
+  pad     = " " * 20
+  newstr  = pad + string
   while True:
     result = user.get_now_playing()
     try:
@@ -244,9 +246,9 @@ def ScrollTitle(string):
         return
       else:
         end = 20
-        for start in range(0, len(string) + 1):
+        for start in range(0, len(newstr) + 1):
           GotoLine(3)
-          message = string[start:end].ljust(20)
+          message = newstr[start:end].ljust(20)
           for character in message:
             SendChar(character)
           time.sleep(0.3)
@@ -255,6 +257,8 @@ def ScrollTitle(string):
       return
 
 def ScrollArtist(string):
+  pad     = " " * 20
+  newstr  = pad + string
   while True:
     result = user.get_now_playing()
     try:
@@ -263,9 +267,9 @@ def ScrollArtist(string):
         return
       else:
         end = 20
-        for start in range(0, len(string) + 1):
+        for start in range(0, len(newstr) + 1):
           GotoLine(2)
-          message = string[start:end].ljust(20)
+          message = newstr[start:end].ljust(20)
           for character in message:
             SendChar(character)
           time.sleep(0.3)
