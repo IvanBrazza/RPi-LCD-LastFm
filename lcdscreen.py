@@ -264,7 +264,7 @@ def ScrollArtist(string):
       else:
         end = 20
         for start in range(0, len(string) + 1):
-          GotoLine(1)
+          GotoLine(2)
           message = string[start:end].ljust(20)
           for character in message:
             SendChar(character)
@@ -444,8 +444,8 @@ def DisplayNowScrobbling(artist, title):
     if ArtistThread.isAlive() == False:
       ArtistThread.start()
   else:
-    GotoLine(1)
-    ShowMessage(artist[:20])
+    GotoLine(2)
+    ShowMessage(artist)
 
   if len(title) > 20:
     global TitleThread
