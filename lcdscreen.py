@@ -177,7 +177,7 @@ def ScrollTitle(string):
     result = user.get_now_playing()
     try:
       title = str(result.get_title())
-      if str(title) != str(string):
+      if title != string:
         return
       else:
         end = 20
@@ -189,7 +189,7 @@ def ScrollTitle(string):
           if start % 7 == 0:
             result = user.get_now_playing()
             title = str(result.get_title())
-            if str(title) != str(string):
+            if title != string:
               return
           time.sleep(0.3)
           end += 1
@@ -203,7 +203,7 @@ def ScrollArtist(string):
     result = user.get_now_playing()
     try:
       artist = str(result.artist.get_name())
-      if str(artist) != str(string):
+      if artist != string:
         return
       else:
         end = 20
@@ -215,7 +215,7 @@ def ScrollArtist(string):
           if start % 7 == 0:
             result = user.get_now_playing()
             artist = str(result.artist.get_name())
-            if str(artist) != str(string):
+            if artist != string:
               return
           time.sleep(0.3)
           end += 1
@@ -229,7 +229,7 @@ def ScrollAlbum(string):
     result = user.get_now_playing()
     try:
       album = str(result.get_album().get_name())
-      if str(album) != str(string):
+      if album != string:
         return
       else:
         end = 20
@@ -241,7 +241,7 @@ def ScrollAlbum(string):
           if start % 7 == 0:
             result = user.get_now_playing()
             album = str(result.get_album().get_name())
-            if str(album) != str(string):
+            if album != string:
               return
           time.sleep(0.3)
           end += 1
