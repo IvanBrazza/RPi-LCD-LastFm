@@ -268,6 +268,27 @@ def ScrollArtist(string):
       else:
         end = 20
         for start in range(0, len(newstr) + 1):
+          GotoLine(1)
+          message = newstr[start:end].ljust(20)
+          for character in message:
+            SendChar(character)
+          time.sleep(0.3)
+          end += 1
+    except:
+      return
+
+def ScrollAlbum(string):
+  pad     = " " * 20
+  newstr  = pad + string
+  while True:
+    result = user.get_now_playing()
+    try:
+      album = str(result.get_album().get_name())
+      if str(album) != str(string):
+        return
+      else:
+        end = 20
+        for start in range(0, len(newstr) + 1):
           GotoLine(2)
           message = newstr[start:end].ljust(20)
           for character in message:
@@ -407,32 +428,37 @@ def InitLast():
 
 def NowScrobbling(result):
   artist = str(result.artist.get_name())
+  album  = str(result.get_album().get_name())
   title  = str(result.get_title())
-  DisplayNowScrobbling(artist, title)
+  DisplayNowScrobbling(artist, album, title)
   while (True):
     switchValues = CheckSwitches()
     if switchValues[0] == 1:
       InitIO()
       InitLCD()
-      DisplayNowScrobbling(artist, title)
+      DisplayNowScrobbling(artist, album, title)
     try:
       result    = user.get_now_playing()
       newartist = str(result.artist.get_name())
+      newalbum  = str(result.get_album().get_name())
       newtitle  = str(result.get_title())
       if newtitle != title:
         title   = newtitle
         artist  = newartist
+        album   = newalbum
         ArtistThread.join()
+        AlbumThread.join()
         TitleThread.join()
-        DisplayNowScrobbling(artist, title)
+        DisplayNowScrobbling(artist, album, title)
       time.sleep(2)
     except:
       ArtistThread.join()
+      AlbumThread.join()
       TitleThread.join()
       ClearDisplay()
       return
 
-def DisplayNowScrobbling(artist, title):
+def DisplayNowScrobbling(artist, album, title):
   ClearDisplay()
 
   GotoLine(0)
@@ -448,8 +474,17 @@ def DisplayNowScrobbling(artist, title):
     if ArtistThread.isAlive() == False:
       ArtistThread.start()
   else:
-    GotoLine(2)
+    GotoLine(1)
     ShowMessage(artist)
+
+  if len(album) > 20:
+    global AlbumThread
+    AlbumThread = threading.Thread(target=ScrollAlbum, args=[album])
+    if AlbumThread.isAlive() == False:
+      AlbumThread.start()
+  else:
+    GotoLine(2)
+    ShowMessage(album)
 
   if len(title) > 20:
     global TitleThread
