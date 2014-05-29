@@ -186,6 +186,11 @@ def ScrollTitle(string):
           message = newstr[start:end].ljust(20)
           for character in message:
             SendChar(character)
+          if start % 7 == 0:
+            result = user.get_now_playing()
+            title = str(result.get_title())
+            if str(title) != str(string):
+              return
           time.sleep(0.3)
           end += 1
     except:
@@ -207,6 +212,11 @@ def ScrollArtist(string):
           message = newstr[start:end].ljust(20)
           for character in message:
             SendChar(character)
+          if start % 7 == 0:
+            result = user.get_now_playing()
+            artist = str(result.artist.get_name())
+            if str(artist) != str(string):
+              return
           time.sleep(0.3)
           end += 1
     except:
@@ -228,6 +238,11 @@ def ScrollAlbum(string):
           message = newstr[start:end].ljust(20)
           for character in message:
             SendChar(character)
+          if start % 7 == 0:
+            result = user.get_now_playing()
+            album = str(result.get_album().get_name())
+            if str(album) != str(string):
+              return
           time.sleep(0.3)
           end += 1
     except:
