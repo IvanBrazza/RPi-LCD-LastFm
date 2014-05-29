@@ -438,7 +438,7 @@ def DisplayNowScrobbling(artist, title):
   GotoLine(0)
   ShowMessage("Now Scrobbling:")
   LoadSymbolBlock(musicNote)
-  GotoXY(0,16)
+  GotoXY(0,18)
   for count in range(len(musicNote)):
     SendByte(count,True)
 
