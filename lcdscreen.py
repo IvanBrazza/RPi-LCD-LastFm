@@ -235,7 +235,7 @@ def ShowMessageWrap(string, LineNumber):
         SendChar(character)
       WordWrap = True
 
-def ScrollMessage(string, LineNumber):
+def ScrollTitle(string):
   while True:
     result = user.get_now_playing()
     try:
@@ -243,9 +243,28 @@ def ScrollMessage(string, LineNumber):
       if str(title) != str(string):
         return
       else:
-        end   = 20
+        end = 20
         for start in range(0, len(string) + 1):
-          GotoLine(LineNumber)
+          GotoLine(3)
+          message = string[start:end].ljust(20)
+          for character in message:
+            SendChar(character)
+          time.sleep(0.3)
+          end += 1
+    except:
+      return
+
+def ScrollArtist(string):
+  while True:
+    result = user.get_now_playing()
+    try:
+      artist = str(result.artist.get_name())
+      if str(artist) != str(string):
+        return
+      else:
+        end = 20
+        for start in range(0, len(string) + 1):
+          GotoLine(1)
           message = string[start:end].ljust(20)
           for character in message:
             SendChar(character)
@@ -399,27 +418,38 @@ def NowScrobbling(result):
       if newtitle != title:
         title   = newtitle
         artist  = newartist
+        ArtistThread.join()
         TitleThread.join()
         DisplayNowScrobbling(artist, title)
       time.sleep(2)
     except:
+      ArtistThread.join()
       TitleThread.join()
       ClearDisplay()
       return
 
 def DisplayNowScrobbling(artist, title):
   ClearDisplay()
+
   GotoLine(0)
   ShowMessage("Now Scrobbling:")
   LoadSymbolBlock(musicNote)
   GotoXY(0,16)
   for count in range(len(musicNote)):
     SendByte(count,True)
-  GotoLine(1)
-  ShowMessage(artist[:20])
+
+  if len(artist) > 20:
+    global ArtistThread
+    ArtistThread = threading.Thread(target=ScrollArtist, args=[artist])
+    if ArtistThread.isAlive() == False:
+      ArtistThread.start()
+  else:
+    GotoLine(1)
+    ShowMessage(artist[:20])
+
   if len(title) > 20:
     global TitleThread
-    TitleThread = threading.Thread(target=ScrollMessage, args=[title, 3])
+    TitleThread = threading.Thread(target=ScrollTitle, args=[title])
     if TitleThread.isAlive() == False:
       TitleThread.start()
   else:
