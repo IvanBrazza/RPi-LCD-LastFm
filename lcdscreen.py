@@ -394,9 +394,13 @@ def NowScrobbling(result):
       DisplayNowScrobbling(artist, title)
     try:
       result    = user.get_now_playing()
-      artist = str(result.artist.get_name())
-      title  = str(result.get_title())
-      DisplayNowScrobbling(artist, title)
+      newartist = str(result.artist.get_name())
+      newtitle  = str(result.get_title())
+      if newtitle != title:
+        title   = newtitle
+        artist  = newartist
+        TitleThread.join()
+        DisplayNowScrobbling(artist, title)
       time.sleep(2)
     except:
       TitleThread.join()
