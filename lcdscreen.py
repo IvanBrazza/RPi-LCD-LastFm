@@ -236,12 +236,12 @@ def ShowMessageWrap(string, LineNumber):
 
 def ScrollMessage(string, LineNumber):
   end   = 20
-  for start in range(0, len(string)):
+  for start in range(0, len(string) + 1):
     GotoLine(LineNumber)
     message = string[start:end].ljust(20)
     for character in message:
       SendChar(character)
-    time.sleep(0.5)
+    time.sleep(0.3)
     end += 1
 
 def GotoLine(row): 
