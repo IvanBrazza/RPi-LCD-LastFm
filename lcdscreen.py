@@ -17,6 +17,7 @@ import random
 import pylast
 import os.path
 import json
+import threading
 
 xbmc = 0
 
@@ -235,14 +236,23 @@ def ShowMessageWrap(string, LineNumber):
       WordWrap = True
 
 def ScrollMessage(string, LineNumber):
-  end   = 20
-  for start in range(0, len(string) + 1):
-    GotoLine(LineNumber)
-    message = string[start:end].ljust(20)
-    for character in message:
-      SendChar(character)
-    time.sleep(0.3)
-    end += 1
+  while True:
+    result = user.get_now_playing()
+    try:
+      title = str(result.get_title())
+      if str(title) != str(string):
+        return
+      else:
+        end   = 20
+        for start in range(0, len(string) + 1):
+          GotoLine(LineNumber)
+          message = string[start:end].ljust(20)
+          for character in message:
+            SendChar(character)
+          time.sleep(0.3)
+          end += 1
+    except:
+      return
 
 def GotoLine(row): 
   #Moves cursor to the given row 
@@ -389,6 +399,7 @@ def NowScrobbling(result):
       DisplayNowScrobbling(artist, title)
       time.sleep(2)
     except:
+      TitleThread.join()
       ClearDisplay()
       return
 
@@ -403,7 +414,10 @@ def DisplayNowScrobbling(artist, title):
   GotoLine(1)
   ShowMessage(artist[:20])
   if len(title) > 20:
-    ScrollMessage(title, 3)
+    global TitleThread
+    TitleThread = threading.Thread(target=ScrollMessage, args=[title, 3])
+    if TitleThread.isAlive() == False:
+      TitleThread.start()
   else:
     GotoLine(3)
     ShowMessage(title)
