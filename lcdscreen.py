@@ -11,30 +11,27 @@
 # 
 ######################################################################## 
 
-import time #for timing delays
-import RPi.GPIO as GPIO
-import random
-import pylast
-import os.path
-import json
-import multiprocessing as mp
-
-xbmc = 0
+import time                   #for timing delays
+import RPi.GPIO as GPIO       #to access RPi GPIO
+import pylast                 #to access the Last.fm API
+import os.path                #to check preferences
+import json                   #to read/write preferences
+import multiprocessing as mp  #to create processes for scrolling text
 
 #OUTPUTS: map GPIO to LCD lines
-LCD_RS          = 7 #GPIO7 = Pi pin 26
-LCD_E           = 8 #GPIO8 = Pi pin 24
-LCD_D4          = 17 #GPIO17 = Pi pin 11
-LCD_D5          = 18 #GPIO18 = Pi pin 12
-LCD_D6          = 27 #GPIO21 = Pi pin 13
-LCD_D7          = 22 #GPIO22 = Pi pin 15
+LCD_RS          = 7           #GPIO7 = Pi pin 26
+LCD_E           = 8           #GPIO8 = Pi pin 24
+LCD_D4          = 17          #GPIO17 = Pi pin 11
+LCD_D5          = 18          #GPIO18 = Pi pin 12
+LCD_D6          = 27          #GPIO21 = Pi pin 13
+LCD_D7          = 22          #GPIO22 = Pi pin 15
 OUTPUTS         = [LCD_RS,LCD_E,LCD_D4,LCD_D5,LCD_D6,LCD_D7]
 
 #INPUTS: map GPIO to Switches
-SW1             = 4 #GPIO4 = Pi pin 7
-SW2             = 23 #GPIO16 = Pi pin 16
-SW3             = 10 #GPIO10 = Pi pin 19
-SW4             = 9 #GPIO9 = Pi pin 21
+SW1             = 4           #GPIO4 = Pi pin 7
+SW2             = 23          #GPIO16 = Pi pin 16
+SW3             = 10          #GPIO10 = Pi pin 19
+SW4             = 9           #GPIO9 = Pi pin 21
 INPUTS          = [SW1,SW2,SW3,SW4]
 
 #HD44780 Controller Commands
@@ -52,7 +49,7 @@ LOADSYMBOL      = 0x40
 SETCURSOR       = 0x80
 
 #Line Addresses.
-LINE = [0x00,0x40,0x14,0x54] #for 20x4 display
+LINE = [0x00,0x40,0x14,0x54]  #for 20x4 display
 
 musicNote = [
 [ 0x7,  0x7,  0x4, 0x4, 0x4, 0x1C, 0x1C, 0x1C ],
@@ -109,7 +106,7 @@ def CheckSwitches():
 def PulseEnableLine(): 
   #Pulse the LCD Enable line; used for clocking in data 
   GPIO.output(LCD_E, GPIO.HIGH) #pulse E high 
-  GPIO.output(LCD_E, GPIO.LOW) #return E low 
+  GPIO.output(LCD_E, GPIO.LOW)  #return E low 
  
 def SendNibble(data): 
   #sends upper 4 bits of data byte to LCD data pins D4-D7 
@@ -120,12 +117,12 @@ def SendNibble(data):
  
 def SendByte(data,charMode=False): 
   #send one byte to LCD controller 
-  GPIO.output(LCD_RS,charMode) #set mode: command vs. char 
-  SendNibble(data) #send upper bits first 
-  PulseEnableLine() #pulse the enable line 
-  data = (data & 0x0F)<< 4 #shift 4 bits to left 
-  SendNibble(data) #send lower bits now 
-  PulseEnableLine() #pulse the enable line 
+  GPIO.output(LCD_RS,charMode)  #set mode: command vs. char 
+  SendNibble(data)              #send upper bits first 
+  PulseEnableLine()             #pulse the enable line 
+  data = (data & 0x0F)<< 4      #shift 4 bits to left 
+  SendNibble(data)              #send lower bits now 
+  PulseEnableLine()             #pulse the enable line 
  
  
 ######################################################################## 
@@ -155,9 +152,9 @@ def CursorRight():
  
 def InitLCD(): 
   #initialize the LCD controller & clear display 
-  SendByte(0x33) #initialize 
-  SendByte(0x32) #initialize/4-bit 
-  SendByte(0x28) #4-bit, 2 lines, 5x8 font 
+  SendByte(0x33)        #initialize 
+  SendByte(0x32)        #initialize/4-bit 
+  SendByte(0x28)        #4-bit, 2 lines, 5x8 font 
   SendByte(LEFTTORIGHT) #rightward moving cursor 
   CursorOff() 
   ClearDisplay() 
@@ -171,6 +168,8 @@ def ShowMessage(string):
     SendChar(character)
 
 def ScrollMessage(string, line):
+  #scroll text on specified line at ~3 characters/second
+  #should be spawned as a separate process (see multiprocessing)
   pad     = " " * 20
   newstr  = pad + string
   while True:
@@ -242,10 +241,12 @@ def BigClock():
   while (True): 
     switchValues = CheckSwitches()
     if switchValues[0] == 1:
+      #re-init display if the first button is pressed
       InitIO()
       InitLCD()
       LoadSymbolBlock(digits)
     try:
+      #check if scrobbling
       result = user.get_now_playing()
       if result:
         NowScrobbling(result)
@@ -279,31 +280,37 @@ def BigClock():
 #
 
 def CheckConfig():
+  #check if config file exists. If it doesn't, create it
   if os.path.isfile("lastconfig.json"):
     return
   else:
     CreateConfig()
 
 def CreateConfig():
+  #display message on LCD and console that we're creating a config
   GotoXY(0,0)
   ShowMessage("Creating config...")
   print "A configuration was not found. Let's create one."
 
+  #get config details
   KEY       = raw_input("Enter your Last.fm API key: ")
   SECRET    = raw_input("Enter your Last.fm API secret: ")
   username  = raw_input("Enter your Last.fm username: ")
   password  = pylast.md5(raw_input("Enter your Last.fm password: "))
   towrite   = {'API_KEY': KEY, 'API_SECRET': SECRET, 'username': username, 'password': password}
 
+  #write config to file
   with open('lastconfig.json', 'w') as outfile:
     json.dump(towrite, outfile, indent=4)
 
 def InitLast():
   global user
 
+  #read config file
   with open('lastconfig.json') as infile:
     config    = json.load(infile)
 
+  #init pylast
   API_KEY     = config['API_KEY']
   API_SECRET  = config['API_SECRET']
   username    = config['username']
@@ -312,17 +319,21 @@ def InitLast():
   user        = network.get_user("dudeman1996")
 
 def NowScrobbling(result):
+  #get track details and display them
   artist = str(result.artist.get_name())
   album  = str(result.get_album().get_name())
   title  = str(result.get_title())
   DisplayNowScrobbling(artist, album, title)
+
   while (True):
     switchValues = CheckSwitches()
     if switchValues[0] == 1:
+      #re-init display if first button is pressed
       InitIO()
       InitLCD()
       DisplayNowScrobbling(artist, album, title)
     try:
+      #check if track has changed
       result    = user.get_now_playing()
       newartist = str(result.artist.get_name())
       newalbum  = str(result.get_album().get_name())
@@ -332,10 +343,11 @@ def NowScrobbling(result):
         artist  = newartist
         album   = newalbum
         for Process in Processes:
-          Process.terminate()
+          Process.terminate() #kill any scrolling processes
         DisplayNowScrobbling(artist, album, title)
       time.sleep(2)
     except:
+      #nothing is playing, kill scrolling processes and return to clock
       for Process in Processes:
         Process.terminate()
       ClearDisplay()
@@ -347,6 +359,7 @@ def DisplayNowScrobbling(artist, album, title):
 
   ClearDisplay()
 
+  #display "Now Scrobbling:" and show music note
   GotoLine(0)
   ShowMessage("Now Scrobbling:")
   LoadSymbolBlock(musicNote)
@@ -354,32 +367,35 @@ def DisplayNowScrobbling(artist, album, title):
   for count in range(len(musicNote)):
     SendByte(count,True)
 
+  #scroll artist name if > 20 characters, otherwise display it
   if len(artist) > 20:
-    global ArtistProcess
+    #spawn process to scroll artist
     ArtistProcess = mp.Process(target=ScrollMessage, args=[artist, 1])
     ArtistProcess.start()
     Processes.append(ArtistProcess)
-    time.sleep(0.2)
+    time.sleep(0.2) #needed for the display to process
   else:
     GotoLine(1)
     ShowMessage(artist)
 
+  #scroll album name if > 20 characters, otherwise display it
   if len(album) > 20:
-    global AlbumProcess
+    #spawn process to scroll album
     AlbumProcess = mp.Process(target=ScrollMessage, args=[album, 2])
     AlbumProcess.start()
     Processes.append(AlbumProcess)
-    time.sleep(0.2)
+    time.sleep(0.2) #needed for the display to process
   else:
     GotoLine(2)
     ShowMessage(album)
 
+  #scroll title name if > 20 characters, otherwise display it
   if len(title) > 20:
-    global TitleProcess
+    #spawn process to scroll title
     TitleProcess = mp.Process(target=ScrollMessage, args=[title, 3])
     TitleProcess.start()
     Processes.append(TitleProcess)
-    time.sleep(0.2)
+    time.sleep(0.2) #needed for the display to process
   else:
     GotoLine(3)
     ShowMessage(title)
