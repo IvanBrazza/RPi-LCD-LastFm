@@ -17,7 +17,7 @@ import random
 import pylast
 import os.path
 import json
-import threading
+import multiprocessing as mp
 
 xbmc = 0
 
@@ -170,83 +170,18 @@ def ShowMessage(string):
   for character in string: 
     SendChar(character)
 
-def ScrollTitle(string):
+def ScrollMessage(string, line):
   pad     = " " * 20
   newstr  = pad + string
   while True:
-    result = user.get_now_playing()
-    try:
-      title = str(result.get_title())
-      if title != string:
-        return
-      else:
-        end = 20
-        for start in range(0, len(newstr) + 1):
-          GotoLine(3)
-          message = newstr[start:end].ljust(20)
-          for character in message:
-            SendChar(character)
-          if start % 7 == 0:
-            result = user.get_now_playing()
-            title = str(result.get_title())
-            if title != string:
-              return
-          time.sleep(0.3)
-          end += 1
-    except:
-      return
-
-def ScrollArtist(string):
-  pad     = " " * 20
-  newstr  = pad + string
-  while True:
-    result = user.get_now_playing()
-    try:
-      artist = str(result.artist.get_name())
-      if artist != string:
-        return
-      else:
-        end = 20
-        for start in range(0, len(newstr) + 1):
-          GotoLine(1)
-          message = newstr[start:end].ljust(20)
-          for character in message:
-            SendChar(character)
-          if start % 7 == 0:
-            result = user.get_now_playing()
-            artist = str(result.artist.get_name())
-            if artist != string:
-              return
-          time.sleep(0.3)
-          end += 1
-    except:
-      return
-
-def ScrollAlbum(string):
-  pad     = " " * 20
-  newstr  = pad + string
-  while True:
-    result = user.get_now_playing()
-    try:
-      album = str(result.get_album().get_name())
-      if album != string:
-        return
-      else:
-        end = 20
-        for start in range(0, len(newstr) + 1):
-          GotoLine(2)
-          message = newstr[start:end].ljust(20)
-          for character in message:
-            SendChar(character)
-          if start % 7 == 0:
-            result = user.get_now_playing()
-            album = str(result.get_album().get_name())
-            if album != string:
-              return
-          time.sleep(0.3)
-          end += 1
-    except:
-      return
+    end = 20
+    for start in range(0, len(newstr) + 1):
+      GotoLine(line)
+      message = newstr[start:end].ljust(20)
+      for character in message:
+        SendChar(character)
+      time.sleep(0.3)
+      end += 1
 
 def GotoLine(row): 
   #Moves cursor to the given row 
@@ -396,19 +331,19 @@ def NowScrobbling(result):
         title   = newtitle
         artist  = newartist
         album   = newalbum
-        for Thread in Threads:
-          Thread.join()
+        for Process in Processes:
+          Process.terminate()
         DisplayNowScrobbling(artist, album, title)
       time.sleep(2)
     except:
-      for Thread in Threads:
-        Thread.join()
+      for Process in Processes:
+        Process.terminate()
       ClearDisplay()
       return
 
 def DisplayNowScrobbling(artist, album, title):
-  global Threads
-  Threads = []
+  global Processes
+  Processes = []
 
   ClearDisplay()
 
@@ -420,31 +355,31 @@ def DisplayNowScrobbling(artist, album, title):
     SendByte(count,True)
 
   if len(artist) > 20:
-    global ArtistThread
-    ArtistThread = threading.Thread(target=ScrollArtist, args=[artist])
-    if ArtistThread.isAlive() == False:
-      ArtistThread.start()
-      Threads.append(ArtistThread)
+    global ArtistProcess
+    ArtistProcess = mp.Process(target=ScrollMessage, args=[artist, 1])
+    ArtistProcess.start()
+    Processes.append(ArtistProcess)
+    time.sleep(0.2)
   else:
     GotoLine(1)
     ShowMessage(artist)
 
   if len(album) > 20:
-    global AlbumThread
-    AlbumThread = threading.Thread(target=ScrollAlbum, args=[album])
-    if AlbumThread.isAlive() == False:
-      AlbumThread.start()
-      Threads.append(AlbumThread)
+    global AlbumProcess
+    AlbumProcess = mp.Process(target=ScrollMessage, args=[album, 2])
+    AlbumProcess.start()
+    Processes.append(AlbumProcess)
+    time.sleep(0.2)
   else:
     GotoLine(2)
     ShowMessage(album)
 
   if len(title) > 20:
-    global TitleThread
-    TitleThread = threading.Thread(target=ScrollTitle, args=[title])
-    if TitleThread.isAlive() == False:
-      TitleThread.start()
-      Threads.append(TitleThread)
+    global TitleProcess
+    TitleProcess = mp.Process(target=ScrollMessage, args=[title, 3])
+    TitleProcess.start()
+    Processes.append(TitleProcess)
+    time.sleep(0.2)
   else:
     GotoLine(3)
     ShowMessage(title)
