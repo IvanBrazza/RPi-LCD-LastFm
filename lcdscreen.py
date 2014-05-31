@@ -17,6 +17,7 @@ import pylast                 #to access the Last.fm API
 import os.path                #to check preferences
 import json                   #to read/write preferences
 import multiprocessing as mp  #to create processes for scrolling text
+import unicodedata            #to convert unicode strings to ASCII
 
 #OUTPUTS: map GPIO to LCD lines
 LCD_RS          = 7           #GPIO7 = Pi pin 26
@@ -320,12 +321,12 @@ def InitLast():
 
 def NowScrobbling(result):
   #get track details and display them
-  artist = str(result.artist.get_name())
+  artist  = unicodedata.normalize('NFKD', result.artist.get_name()).encode('ascii','ignore')
   try:
-    album  = str(result.get_album().get_name())
+    album = unicodedata.normalize('NFKD', result.get_album().get_name()).encode('ascii','ignore')
   except:
     album = " "
-  title  = str(result.get_title())
+  title   = unicodedata.normalize('NFKD', result.get_title()).encode('ascii','ignore')
   DisplayNowScrobbling(artist, album, title)
 
   while (True):
