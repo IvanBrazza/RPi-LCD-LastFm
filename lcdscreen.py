@@ -321,7 +321,10 @@ def InitLast():
 def NowScrobbling(result):
   #get track details and display them
   artist = str(result.artist.get_name())
-  album  = str(result.get_album().get_name())
+  try:
+    album  = str(result.get_album().get_name())
+  except:
+    album = " "
   title  = str(result.get_title())
   DisplayNowScrobbling(artist, album, title)
 
@@ -336,7 +339,10 @@ def NowScrobbling(result):
       #check if track has changed
       result    = user.get_now_playing()
       newartist = str(result.artist.get_name())
-      newalbum  = str(result.get_album().get_name())
+      try:
+        newalbum  = str(result.get_album().get_name())
+      except:
+        newalbum = " "
       newtitle  = str(result.get_title())
       if newtitle != title:
         title   = newtitle
