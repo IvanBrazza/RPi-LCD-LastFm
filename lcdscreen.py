@@ -181,7 +181,10 @@ def ScrollMessage(string, line):
       message = newstr[start:end].ljust(20)
       for character in message:
         SendChar(character)
-      time.sleep(0.3)
+      if start == 20:
+        time.sleep(2)
+      else:
+        time.sleep(0.3)
       end += 1
 
 def GotoLine(row): 
