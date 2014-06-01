@@ -172,6 +172,14 @@ def ShowMessage(string):
 def ScrollMessage(string, line):
   #scroll text on specified line at ~3 characters/second
   #should be spawned as a separate process (see multiprocessing)
+  end = 20
+  for start in range(0, len(string) + 1):
+    GotoLine(line)
+    message = string[start:end].ljust(20)
+    for character in message:
+      SendChar(character)
+    time.sleep(0.3)
+    end += 1
   pad     = " " * 20
   newstr  = pad + string
   while True:
